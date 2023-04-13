@@ -164,8 +164,7 @@ abstract class JustTheInterface extends StatefulWidget {
   ///
   /// If barrier builder is null, a default barrier is built according to
   /// [barrierColor] and [barrierDismissible].
-  Widget Function(BuildContext, Animation<double>, VoidCallback)?
-      get barrierBuilder;
+  Widget Function(BuildContext, Animation<double>, VoidCallback)? get barrierBuilder;
 
   /// Whether the tooltip should provide acoustic and/or haptic feedback.
   ///
@@ -254,4 +253,9 @@ abstract class JustTheInterface extends StatefulWidget {
   /// example, if the tooltip happens to go beyond its quadrant but there is
   /// scroll space beneath it the bounds will accomadate it.
   ScrollController? get scrollController;
+
+  /// This will prevent the tooltip from getting hidden on pointer events. This
+  /// also means the caller will have to call hideTooltip on the controller
+  /// to hide the tooltip.
+  bool get disablePointerEvents;
 }

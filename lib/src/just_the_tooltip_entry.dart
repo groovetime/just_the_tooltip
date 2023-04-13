@@ -34,13 +34,13 @@ class JustTheTooltipEntry extends StatefulWidget implements JustTheInterface {
     this.tailLength = 16.0,
     this.tailBaseWidth = 32.0,
     this.tailBuilder = JustTheInterface.defaultTailBuilder,
-    this.animatedTransitionBuilder =
-        JustTheInterface.defaultAnimatedTransitionBuilder,
+    this.animatedTransitionBuilder = JustTheInterface.defaultAnimatedTransitionBuilder,
     this.backgroundColor,
     this.textDirection = TextDirection.ltr,
     this.shadow,
     this.showWhenUnlinked = false,
     this.scrollController,
+    this.disablePointerEvents = false,
   });
 
   @override
@@ -77,8 +77,7 @@ class JustTheTooltipEntry extends StatefulWidget implements JustTheInterface {
   final Color barrierColor;
 
   @override
-  final Widget Function(BuildContext, Animation<double>, VoidCallback)?
-      barrierBuilder;
+  final Widget Function(BuildContext, Animation<double>, VoidCallback)? barrierBuilder;
 
   @override
   final bool? enableFeedback;
@@ -139,6 +138,9 @@ class JustTheTooltipEntry extends StatefulWidget implements JustTheInterface {
 
   @override
   final ScrollController? scrollController;
+
+  @override
+  final bool disablePointerEvents;
 
   @override
   JustTheTooltipState<Widget> createState() => _JustTheTooltipEntryState();

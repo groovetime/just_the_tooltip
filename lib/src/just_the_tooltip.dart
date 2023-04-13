@@ -51,13 +51,13 @@ class JustTheTooltip extends StatefulWidget implements JustTheInterface {
     this.tailLength = 16.0,
     this.tailBaseWidth = 32.0,
     this.tailBuilder = JustTheInterface.defaultTailBuilder,
-    this.animatedTransitionBuilder =
-        JustTheInterface.defaultAnimatedTransitionBuilder,
+    this.animatedTransitionBuilder = JustTheInterface.defaultAnimatedTransitionBuilder,
     this.backgroundColor,
     this.textDirection = TextDirection.ltr,
     this.shadow,
     this.showWhenUnlinked = false,
     this.scrollController,
+    this.disablePointerEvents = false,
   }) : super(key: key);
 
   @override
@@ -97,8 +97,7 @@ class JustTheTooltip extends StatefulWidget implements JustTheInterface {
   final bool? enableFeedback;
 
   @override
-  final Widget Function(BuildContext, Animation<double>, VoidCallback)?
-      barrierBuilder;
+  final Widget Function(BuildContext, Animation<double>, VoidCallback)? barrierBuilder;
 
   // FIXME: This happens in the non-hover (i.e. isModal) case as well.
   @override
@@ -159,8 +158,10 @@ class JustTheTooltip extends StatefulWidget implements JustTheInterface {
   final ScrollController? scrollController;
 
   @override
-  JustTheTooltipState<OverlayEntry> createState() =>
-      _JustTheTooltipOverlayState();
+  final bool disablePointerEvents;
+
+  @override
+  JustTheTooltipState<OverlayEntry> createState() => _JustTheTooltipOverlayState();
 }
 
 class _JustTheTooltipOverlayState extends JustTheTooltipState<OverlayEntry> {
@@ -268,8 +269,7 @@ class _JustTheTooltipOverlayState extends JustTheTooltipState<OverlayEntry> {
 /// for the fact it is setup to handle two Tooltip cases. Abstract methods are
 /// replaced with implementations that are specific to the tooltip type.
 // TODO: This looks more idiomatic as a mixin.
-abstract class JustTheTooltipState<T> extends State<JustTheInterface>
-    with SingleTickerProviderStateMixin {
+abstract class JustTheTooltipState<T> extends State<JustTheInterface> with SingleTickerProviderStateMixin {
   T? get entry;
 
   T? get skrim;
@@ -307,8 +307,7 @@ abstract class JustTheTooltipState<T> extends State<JustTheInterface>
   static const Duration _defaultShowDuration = Duration(milliseconds: 1500);
   static const Duration _defaultHoverShowDuration = Duration(milliseconds: 100);
   static const Duration _defaultWaitDuration = Duration.zero;
-  static const TooltipTriggerMode _defaultTriggerMode =
-      TooltipTriggerMode.longPress;
+  static const TooltipTriggerMode _defaultTriggerMode = TooltipTriggerMode.longPress;
   static const bool _defaultEnableFeedback = true;
 
   late final AnimationController _animationController;
@@ -323,8 +322,7 @@ abstract class JustTheTooltipState<T> extends State<JustTheInterface>
   late bool enableFeedback;
   late bool barrierDismissible;
   late Color barrierColor;
-  late Widget Function(BuildContext, Animation<double>, VoidCallback)?
-      barrierBuilder;
+  late Widget Function(BuildContext, Animation<double>, VoidCallback)? barrierBuilder;
 
   // These properties are specific to just_the_tooltip
   // static const Curve _defaultAnimateCurve = Curves.linear;
@@ -341,8 +339,7 @@ abstract class JustTheTooltipState<T> extends State<JustTheInterface>
       // RendererBinding.instance!.mouseTracker.addListener seems to have a bug
       // if you move the mouse as the page is loading, the listener never gets
       // called. Set mouseConnected here as a work around
-      _mouseIsConnected =
-          RendererBinding.instance.mouseTracker.mouseIsConnected;
+      _mouseIsConnected = RendererBinding.instance.mouseTracker.mouseIsConnected;
 
       _addBindingListeners();
     }
@@ -406,19 +403,22 @@ abstract class JustTheTooltipState<T> extends State<JustTheInterface>
     _hasBindingListeners = true;
 
     // Listen to see when a mouse is added.
-    RendererBinding.instance.mouseTracker
-        .addListener(_handleMouseTrackerChange);
+    RendererBinding.instance.mouseTracker.addListener(_handleMouseTrackerChange);
+
     // Listen to global pointer events so that we can hide a tooltip immediately
     // if some other control is clicked on.
-    GestureBinding.instance.pointerRouter.addGlobalRoute(_handlePointerEvent);
+    if (!widget.disablePointerEvents) {
+      GestureBinding.instance.pointerRouter.addGlobalRoute(_handlePointerEvent);
+    }
   }
 
   void _removeBindingListeners() {
     if (_hasBindingListeners) _hasBindingListeners = false;
-    RendererBinding.instance.mouseTracker
-        .removeListener(_handleMouseTrackerChange);
-    GestureBinding.instance.pointerRouter
-        .removeGlobalRoute(_handlePointerEvent);
+    RendererBinding.instance.mouseTracker.removeListener(_handleMouseTrackerChange);
+
+    if (!widget.disablePointerEvents) {
+      GestureBinding.instance.pointerRouter.removeGlobalRoute(_handlePointerEvent);
+    }
   }
 
   void _handleMouseTrackerChange() {
@@ -426,8 +426,7 @@ abstract class JustTheTooltipState<T> extends State<JustTheInterface>
       return;
     }
 
-    final mouseIsConnected =
-        RendererBinding.instance.mouseTracker.mouseIsConnected;
+    final mouseIsConnected = RendererBinding.instance.mouseTracker.mouseIsConnected;
 
     if (mouseIsConnected != _mouseIsConnected) {
       setState(() {
@@ -601,20 +600,11 @@ abstract class JustTheTooltipState<T> extends State<JustTheInterface>
   Widget build(BuildContext context) {
     final tooltipTheme = TooltipTheme.of(context);
 
-    waitDuration = widget.waitDuration ??
-        tooltipTheme.waitDuration ??
-        _defaultWaitDuration;
-    showDuration = widget.showDuration ??
-        tooltipTheme.showDuration ??
-        _defaultShowDuration;
-    hoverShowDuration = widget.showDuration ??
-        tooltipTheme.showDuration ??
-        _defaultHoverShowDuration;
-    triggerMode =
-        widget.triggerMode ?? tooltipTheme.triggerMode ?? _defaultTriggerMode;
-    enableFeedback = widget.enableFeedback ??
-        tooltipTheme.enableFeedback ??
-        _defaultEnableFeedback;
+    waitDuration = widget.waitDuration ?? tooltipTheme.waitDuration ?? _defaultWaitDuration;
+    showDuration = widget.showDuration ?? tooltipTheme.showDuration ?? _defaultShowDuration;
+    hoverShowDuration = widget.showDuration ?? tooltipTheme.showDuration ?? _defaultHoverShowDuration;
+    triggerMode = widget.triggerMode ?? tooltipTheme.triggerMode ?? _defaultTriggerMode;
+    enableFeedback = widget.enableFeedback ?? tooltipTheme.enableFeedback ?? _defaultEnableFeedback;
     barrierDismissible = widget.barrierDismissible;
     barrierColor = widget.barrierColor;
     barrierBuilder = widget.barrierBuilder;
@@ -664,9 +654,7 @@ abstract class JustTheTooltipState<T> extends State<JustTheInterface>
     }
     return GestureDetector(
       key: skrimKey,
-      behavior: barrierDismissible
-          ? HitTestBehavior.translucent
-          : HitTestBehavior.deferToChild,
+      behavior: barrierDismissible ? HitTestBehavior.translucent : HitTestBehavior.deferToChild,
       onTap: _hideTooltip,
       child: Container(color: barrierColor),
     );
@@ -711,8 +699,7 @@ abstract class JustTheTooltipState<T> extends State<JustTheInterface>
                     return PositionedTooltip(
                       // curve: _defaultAnimateCurve,
                       // duration: _defaultAnimateDuration,
-                      animatedTransitionBuilder:
-                          widget.animatedTransitionBuilder,
+                      animatedTransitionBuilder: widget.animatedTransitionBuilder,
                       margin: widget.margin,
                       targetSize: targetInformation.size,
                       target: targetInformation.target,
@@ -723,8 +710,7 @@ abstract class JustTheTooltipState<T> extends State<JustTheInterface>
                       tailBaseWidth: widget.tailBaseWidth,
                       tailLength: widget.tailLength,
                       tailBuilder: widget.tailBuilder,
-                      backgroundColor:
-                          widget.backgroundColor ?? theme.cardColor,
+                      backgroundColor: widget.backgroundColor ?? theme.cardColor,
                       textDirection: widget.textDirection,
                       shadow: widget.shadow ?? defaultShadow,
                       elevation: widget.elevation,
